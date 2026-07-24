@@ -13,7 +13,13 @@
     "coverage": "vitest run --coverage",
     "migrate": "npx tsx src/scripts/migrate.ts",
     "migrate:status": "npx tsx src/scripts/migrate.ts --status",
-    "deploy": "sudo systemctl restart vos-billing"
+    "deploy": "./deploy.sh",
+    "deploy:force": "./deploy.sh --force",
+    "deploy:dry": "./deploy.sh --dry-run",
+    "deploy:skip": "./deploy.sh --skip-build",
+    "check": "./check.sh",
+    "check:dry": "./check.sh --dry-run",
+    "restart": "sudo systemctl restart vos-billing"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

@@ -48,6 +48,38 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
+function VersionDisplay({ collapsed }: { collapsed: boolean }) {
+  const [version, setVersion] = useState<{ tag: string; commit: string; date: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/version")
+      .then(r => r.json())
+      .then(d => setVersion(d))
+      .catch(() => {});
+  }, []);
+
+  if (!version) return null;
+
+  const label = version.tag || version.commit;
+
+  return (
+    <div className="border-t border-brand-500 px-3 py-2">
+      {collapsed ? (
+        <div className="flex justify-center" title={`${label} (${version.date})`}>
+          <span className="text-[10px] font-mono text-white/40">{version.commit}</span>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-mono text-white/50">
+            {label}
+          </span>
+          <span className="text-[9px] text-white/30">{version.date}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface NavItem {
   href: string;
   label: string;
@@ -429,6 +461,9 @@ export default function Sidebar() {
           return renderItem(item as NavItem);
         })}
       </nav>
+
+      {/* Version */}
+      <VersionDisplay collapsed={collapsed} />
 
       {/* Collapse Toggle */}
       <div className="border-t border-brand-500 p-2">

@@ -1,9 +1,20 @@
 #!/bin/bash
 # Standalone health verification — run anytime to check all critical endpoints
-# Usage: ./check.sh
+# Usage: ./check.sh [--dry-run]
+#   --dry-run  Skip health wait + API checks, print what would be verified
 set -e
+cd /home/kunshiweb
+
+DRY_RUN=false
+if [ "${1:-}" = "--dry-run" ]; then
+  DRY_RUN=true
+  shift
+fi
 
 PREFIX="[check]"
+$DRY_RUN && PREFIX="[check:dry]"
+
+$DRY_RUN && echo "$PREFIX 🔍 DRY RUN — skipping health wait + API verification"
 
 # Git status check — warn if code differs from last commit (may differ from deployed build)
 echo "$PREFIX Checking git status..."
@@ -22,6 +33,36 @@ fi
 # Show last commit for reference
 echo -n "$PREFIX 📦 Last commit: "
 git log -1 --oneline --no-decorate 2>/dev/null || echo "(no commits)"
+
+# Show ahead/behind vs origin (local ref — run 'git fetch' to refresh)
+if git config --get remote.origin.url >/dev/null 2>&1; then
+  COUNTS=$(git rev-list --left-right --count @{u}...HEAD 2>/dev/null || echo "")
+  if [ -n "$COUNTS" ]; then
+    BEHIND=$(echo "$COUNTS" | awk '{print $1}'); BEHIND=${BEHIND:-0}
+    AHEAD=$(echo "$COUNTS" | awk '{print $2}'); AHEAD=${AHEAD:-0}
+    if [ "$BEHIND" -gt 0 ] || [ "$AHEAD" -gt 0 ]; then
+      echo -n "$PREFIX 📡 Remote (local): "
+      [ "$BEHIND" -gt 0 ] && echo -n "↓$BEHIND behind "
+      [ "$AHEAD" -gt 0 ] && echo -n "↑$AHEAD ahead"
+      echo ""
+    else
+      echo "$PREFIX 📡 In sync with origin"
+    fi
+  fi
+fi
+
+# Dry run: print preview and exit early (no nested if/else blocks)
+if $DRY_RUN; then
+  echo "$PREFIX 🔍 Would wait 30s for service health, then verify:"
+  echo "$PREFIX 🔍   - Uptime monitor check"
+  echo "$PREFIX 🔍   - /api/vos/accounts"
+  echo "$PREFIX 🔍   - /api/vos/gateways/routing"
+  echo "$PREFIX 🔍   - /api/vos/gateways/mapping"
+  echo "$PREFIX ✅ Dry run complete — no health checks performed"
+  exit 0
+fi
+
+# ─── Normal (non-dry-run) path below ───
 
 echo "$PREFIX Waiting for service to be ready..."
 HEALTH_OK=false
