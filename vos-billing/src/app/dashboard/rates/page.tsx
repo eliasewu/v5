@@ -75,22 +75,11 @@ export default function RatesPage() {
     fetch("/api/vos/areacodes").then(r => r.json()).then(d => setAreacodes(d.areacodes || [])).catch(() => {});
   }, []);
 
-  const areacodeSet = useMemo(() => {
-    const s = new Set<string>();
-    for (const a of areacodes) if (a.areacode) s.add(a.areacode);
-    return s;
-  }, [areacodes]);
   const areacodeToName = useMemo(() => {
     const m = new Map<string, string>();
     for (const a of areacodes) if (a.areacode && a.location) m.set(a.areacode, a.location);
     return m;
   }, [areacodes]);
-  const lookupPrefix = (prefix: string): { areacode: string; areaName: string } => {
-    const p = prefix.trim();
-    const name = areacodeToName.get(p);
-    return name ? { areacode: p, areaName: name } : { areacode: "", areaName: "" };
-  };
-
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
@@ -640,11 +629,7 @@ export default function RatesPage() {
                   <input
                     type="text"
                     value={editForm.prefix || ""}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const looked = lookupPrefix(val);
-                      setEditForm({ ...editForm, prefix: val, areacode: looked.areacode || (editForm.areacode || "") });
-                    }}
+                    onChange={(e) => setEditForm({ ...editForm, prefix: e.target.value })}
                     className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg text-sm text-surface-50 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -914,11 +899,7 @@ export default function RatesPage() {
                 <div>
                   <label className="block text-xs text-surface-400 mb-1">Prefix *</label>
                   <input type="text" value={addForm.prefix}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const looked = lookupPrefix(val);
-                      setAddForm({...addForm, prefix: val, areacode: looked.areacode || addForm.areacode});
-                    }}
+                    onChange={(e) => setAddForm({...addForm, prefix: e.target.value})}
                     className="w-full px-3 py-2 bg-surface-800 border border-surface-700 rounded-lg text-sm text-surface-50 focus:outline-none focus:border-emerald-500" />
                 </div>
                 <div>

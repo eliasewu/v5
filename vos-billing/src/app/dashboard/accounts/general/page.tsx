@@ -37,6 +37,22 @@ interface Account {
   bankAccount: string;
   cc: string;
   bcc: string;
+  bitsofconfig: number;
+  validtime: number;
+  locktype: number;
+  todayconsumption: number;
+  phonebookserialid: number;
+  phonebooklimit: number;
+  ctdbillingtype: number;
+  timezoneid: string;
+  workday: number;
+  feetimeaverage: number;
+  feetimeaveragenonwork: number;
+  feetimedays: number;
+  feetimedaysnonwork: number;
+  feetimetoday: number;
+  customerId: number;
+  calendarId: number;
 }
 
 const TYPE_LABELS: Record<number, string> = { 0: "General", 1: "Clearing", 2: "Agent", 3: "Phone Card" };
@@ -62,7 +78,11 @@ export default function GeneralAccountPage() {
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ account:"", name:"", money:0, limitmoney:0, type:0, status:1, feerateGroupId: 0,
-    feerateGroupPrivateId: 0, email:"", phone:"", company:"", address:"", bankAccount:"", cc:"", bcc:"" });
+    feerateGroupPrivateId: 0, email:"", phone:"", company:"", address:"", bankAccount:"", cc:"", bcc:"",
+    bitsofconfig:0, validtime:0, locktype:0, todayconsumption:0,
+    phonebookserialid:0, phonebooklimit:0, ctdbillingtype:0, timezoneid:"",
+    workday:1, feetimeaverage:0, feetimeaveragenonwork:0, feetimedays:0, feetimedaysnonwork:0,
+    feetimetoday:0, customerId:0, calendarId:0 });
   const [selectedGatewayIds, setSelectedGatewayIds] = useState<number[]>([]);
   const [rateGroups, setRateGroups] = useState<{ id: number; name: string }[]>([]);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
@@ -124,8 +144,8 @@ export default function GeneralAccountPage() {
       let accountId = editingAccount?.id;
       const url = editingAccount ? `/api/vos/accounts/${editingAccount.id}` : "/api/vos/accounts";
       const method = editingAccount ? "PUT" : "POST";
-      const { email, phone, company, address, bankAccount, cc, bcc, ...coreForm } = form;
-      const payload: Record<string, any> = { ...coreForm, email, phone, company, address, bankAccount, cc, bcc };
+      const { email, phone, company, address, bankAccount, cc, bcc, bitsofconfig, validtime, locktype, todayconsumption, phonebookserialid, phonebooklimit, ctdbillingtype, timezoneid, workday, feetimeaverage, feetimeaveragenonwork, feetimedays, feetimedaysnonwork, feetimetoday, customerId, calendarId, ...coreForm } = form;
+      const payload: Record<string, any> = { ...coreForm, email, phone, company, address, bankAccount, cc, bcc, bitsofconfig, validtime, locktype, todayconsumption, phonebookserialid, phonebooklimit, ctdbillingtype, timezoneid, workday, feetimeaverage, feetimeaveragenonwork, feetimedays, feetimedaysnonwork, feetimetoday, customerId, calendarId };
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (data.error) { setError(safeErrorString(data.error)); return; }
@@ -214,7 +234,15 @@ export default function GeneralAccountPage() {
   const openEdit = async (a: Account) => {
     setEditingAccount(a);
     setForm({ account: a.account, name: a.name, money: a.money, limitmoney: a.limitmoney, type: a.type, status: a.status, feerateGroupId: a.feerateGroupId || 0,
-      feerateGroupPrivateId: a.feerateGroupPrivateId || 0, email: a.email || "", phone: a.phone || "", company: a.company || "", address: a.address || "", bankAccount: a.bankAccount || "", cc: a.cc || "", bcc: a.bcc || "" });
+      feerateGroupPrivateId: a.feerateGroupPrivateId || 0, email: a.email || "", phone: a.phone || "", company: a.company || "", address: a.address || "", bankAccount: a.bankAccount || "", cc: a.cc || "", bcc: a.bcc || "",
+      bitsofconfig: a.bitsofconfig ?? 0, validtime: a.validtime ?? 0, locktype: a.locktype ?? 0,
+      todayconsumption: Number(a.todayconsumption) || 0,
+      phonebookserialid: a.phonebookserialid ?? 0, phonebooklimit: a.phonebooklimit ?? 0,
+      ctdbillingtype: a.ctdbillingtype ?? 0, timezoneid: a.timezoneid || "",
+      workday: a.workday ?? 1, feetimeaverage: a.feetimeaverage ?? 0,
+      feetimeaveragenonwork: a.feetimeaveragenonwork ?? 0, feetimedays: a.feetimedays ?? 0,
+      feetimedaysnonwork: a.feetimedaysnonwork ?? 0, feetimetoday: a.feetimetoday ?? 0,
+      customerId: a.customerId ?? 0, calendarId: a.calendarId ?? 0 });
     // Fetch currently assigned gateway IDs for this account
     try {
       const res = await fetch(`/api/vos/gateways?type=mapping`);
@@ -275,7 +303,11 @@ export default function GeneralAccountPage() {
   const openAdd = () => {
     setEditingAccount(null);
     setForm({ account: "", name: "", money: 0, limitmoney: 0, type: 0, status: 1, feerateGroupId: 0,
-      feerateGroupPrivateId: 0, email: "", phone: "", company: "", address: "", bankAccount: "", cc: "", bcc: "" });
+      feerateGroupPrivateId: 0, email: "", phone: "", company: "", address: "", bankAccount: "", cc: "", bcc: "",
+      bitsofconfig: 0, validtime: 0, locktype: 0, todayconsumption: 0,
+      phonebookserialid: 0, phonebooklimit: 0, ctdbillingtype: 0, timezoneid: "",
+      workday: 1, feetimeaverage: 0, feetimeaveragenonwork: 0, feetimedays: 0, feetimedaysnonwork: 0,
+      feetimetoday: 0, customerId: 0, calendarId: 0 });
     setSelectedGatewayIds([]);
     setShowModal(true);
   };
@@ -716,6 +748,29 @@ export default function GeneralAccountPage() {
                   onChange={v => setForm({ ...form, feerateGroupPrivateId: Number(v) })}
                 />
               )}
+
+              {/* Account Settings */}
+              <div className="border-t border-surface-800 pt-4">
+                <h3 className="text-xs font-semibold text-surface-300 uppercase tracking-wider mb-3">Account Settings</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Config Bits</label><input type="number" value={form.bitsofconfig} onChange={e => setForm({...form, bitsofconfig: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Valid Time</label><input type="number" value={form.validtime} onChange={e => setForm({...form, validtime: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Lock Type</label><select value={form.locktype} onChange={e => setForm({...form, locktype: parseInt(e.target.value)})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none"><option value={0}>Unlocked</option><option value={1}>Locked</option></select></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Stored Consumption</label><input type="number" step="0.0001" value={form.todayconsumption} onChange={e => setForm({...form, todayconsumption: parseFloat(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Phonebook Serial</label><input type="number" value={form.phonebookserialid} onChange={e => setForm({...form, phonebookserialid: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Phonebook Limit</label><input type="number" value={form.phonebooklimit} onChange={e => setForm({...form, phonebooklimit: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">CTD Billing</label><select value={form.ctdbillingtype} onChange={e => setForm({...form, ctdbillingtype: parseInt(e.target.value)})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none"><option value={0}>Off</option><option value={1}>On</option></select></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Timezone</label><input value={form.timezoneid} onChange={e => setForm({...form, timezoneid: e.target.value})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" placeholder="e.g. Asia/Dhaka" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Workday</label><select value={form.workday} onChange={e => setForm({...form, workday: parseInt(e.target.value)})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none"><option value={0}>No</option><option value={1}>Yes</option></select></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Fee Time Avg</label><input type="number" value={form.feetimeaverage} onChange={e => setForm({...form, feetimeaverage: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Fee Time Avg (Non-Work)</label><input type="number" value={form.feetimeaveragenonwork} onChange={e => setForm({...form, feetimeaveragenonwork: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Fee Time Days</label><input type="number" value={form.feetimedays} onChange={e => setForm({...form, feetimedays: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Fee Time Days (Non-Work)</label><input type="number" value={form.feetimedaysnonwork} onChange={e => setForm({...form, feetimedaysnonwork: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Fee Time Today</label><input type="number" value={form.feetimetoday} onChange={e => setForm({...form, feetimetoday: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Customer ID (Parent)</label><input type="number" value={form.customerId} onChange={e => setForm({...form, customerId: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                  <div><label className="block text-xs font-medium text-surface-400 mb-1">Calendar ID</label><input type="number" value={form.calendarId} onChange={e => setForm({...form, calendarId: parseInt(e.target.value)||0})} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                </div>
+              </div>
 
               {/* Gateway Selector */}
               <div className="border-t border-surface-800 pt-4">

@@ -34,7 +34,6 @@ export default function RateWizardPage() {
   const [mccmnc, setMccmnc] = useState<MccMnc[]>([]);
   const [rateGroups, setRateGroups] = useState<RateGroup[]>([]);
   const [areacodes, setAreacodes] = useState<{ areacode: string; location: string }[]>([]);
-  const [prefixMap, setPrefixMap] = useState<Map<number, string>>(new Map());
 
   // Selections
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -80,8 +79,7 @@ export default function RateWizardPage() {
       fetch("/api/vos/rates").then(r => r.json()),
       fetch("/api/vos/mccmnc").then(r => r.json()),
       fetch("/api/vos/areacodes").then(r => r.json()).catch(() => ({ areacodes: [] })),
-      fetch("/api/vos/prefixes").then(r => r.json()).catch(() => ({ prefixes: [] })),
-    ]).then(([custData, rateData, mccData, areaData, prefixData]) => {
+    ]).then(([custData, rateData, mccData, areaData]) => {
       setCustomers((custData.customers || []).map((c: any) => ({
         id: c.id, name: c.customer_name, email: c.contact_email,
         feerateGroupId: c.feerategroup_id || 0,
@@ -92,9 +90,6 @@ export default function RateWizardPage() {
       setRateGroups(groups);
       setMccmnc(mccData.entries || []);
       setAreacodes(areaData.areacodes || []);
-      const pmap = new Map<number, string>();
-      (prefixData.prefixes || []).forEach((p: any) => pmap.set(p.mccmnc_id, p.prefix));
-      setPrefixMap(pmap);
     }).finally(() => {
       setLoadingCustomers(false);
       setLoadingData(false);
@@ -138,20 +133,18 @@ export default function RateWizardPage() {
       const newRows = new Map<number, OperatorRow>();
       for (const op of displayedOperators) {
         const existing = prev.get(op.id);
-        const pfx = prefixMap.get(op.id) || "";
-        const ac = getOperatorAreacode(op, pfx);
+        const ac = getOperatorAreacode(op);
         if (existing) {
-          // Always recompute prefix & area code (they may have been empty during initial load)
+          // Always recompute area code (it may have been empty during initial load)
           newRows.set(op.id, {
             ...existing,
-            prefix: existing.prefix || pfx,
             areacode: existing.areacode || ac,
             areaName: existing.areaName || areacodeToName.get(existing.areacode || ac) || "",
           });
         } else {
           newRows.set(op.id, {
             op,
-            prefix: pfx,
+            prefix: "",
             areacode: ac,
             areaName: areacodeToName.get(ac) || "",
             fee: defaultFee,
@@ -163,30 +156,19 @@ export default function RateWizardPage() {
       }
       return newRows;
     });
-  }, [displayedOperators, prefixMap, areacodes, defaultFee, defaultTax, defaultPeriod]);
+  }, [displayedOperators, areacodes, defaultFee, defaultTax, defaultPeriod]);
 
   // Combined areacode lookup: Set for existence checks + Map for name tooltips
-  const { areacodeSet, areacodeToName } = useMemo(() => {
-    const set = new Set<string>();
+  const areacodeToName = useMemo(() => {
     const map = new Map<string, string>();
     for (const a of areacodes) {
-      if (a.areacode) {
-        set.add(a.areacode);
-        if (a.location) map.set(a.areacode, a.location);
-      }
+      if (a.areacode && a.location) map.set(a.areacode, a.location);
     }
-    return { areacodeSet: set, areacodeToName: map };
+    return map;
   }, [areacodes]);
 
-  // Look up areacode + areaName from a prefix string
-  const lookupPrefix = (prefix: string): { areacode: string; areaName: string } => {
-    const p = prefix.trim();
-    const name = areacodeToName.get(p);
-    return name ? { areacode: p, areaName: name } : { areacode: "", areaName: "" };
-  };
-
   // Area code lookup — uses new "CountryName - AreaName" format from e_areacode
-  const getOperatorAreacode = (op: { country: string; operator: string }, prefix?: string) => {
+  const getOperatorAreacode = (op: { country: string; operator: string }) => {
     const countryLow = op.country.trim().toLowerCase();
     const opLow = op.operator.trim().toLowerCase();
     if (!countryLow) return "";
@@ -209,12 +191,7 @@ export default function RateWizardPage() {
       if (exact) return exact.areacode;
     }
 
-    // Step 2: Prefix-based fallback — look up the operator's prefix directly in e_areacode
-    if (prefix && areacodeSet.has(prefix)) {
-      return prefix;
-    }
-
-    // Step 3: Country-level fallback — word-boundary match on country name within full location
+    // Step 2: Country-level fallback — word-boundary match on country name within full location
     // Catches "Afghanistan" in "Afghanistan - Afghanistan Cellular-MTN"
     const loose = areacodes.find(a => wordMatch(a.location.trim().toLowerCase(), countryLow));
     return loose ? loose.areacode : "";
@@ -606,13 +583,7 @@ export default function RateWizardPage() {
                                 type="text"
                                 value={row.prefix}
                                 onChange={e => {
-                                  const val = e.target.value;
-                                  const looked = lookupPrefix(val);
-                                  updateRow(op.id, {
-                                    prefix: val,
-                                    areacode: looked.areacode || row.areacode,
-                                    areaName: looked.areacode ? looked.areaName : row.areaName,
-                                  });
+                                  updateRow(op.id, { prefix: e.target.value });
                                 }}
                                 className="w-full px-2 py-1.5 bg-surface-800 border border-surface-700/50 rounded text-xs text-surface-50 focus:outline-none focus:border-violet-500/50 font-mono"
                                 placeholder="—"

@@ -189,6 +189,70 @@ export async function PUT(
       fields.push("alarmemail = ?");
       values.push(String(body.email));
     }
+    if (body.bitsofconfig !== undefined) {
+      fields.push("bitsofconfig = ?");
+      values.push(Number(body.bitsofconfig));
+    }
+    if (body.validtime !== undefined) {
+      fields.push("validtime = ?");
+      values.push(Number(body.validtime));
+    }
+    if (body.locktype !== undefined) {
+      fields.push("locktype = ?");
+      values.push(Number(body.locktype));
+    }
+    if (body.todayconsumption !== undefined) {
+      fields.push("todayconsumption = ?");
+      values.push(Number(body.todayconsumption));
+    }
+    if (body.phonebookserialid !== undefined) {
+      fields.push("phonebookserialid = ?");
+      values.push(Number(body.phonebookserialid));
+    }
+    if (body.phonebooklimit !== undefined) {
+      fields.push("phonebooklimit = ?");
+      values.push(Number(body.phonebooklimit));
+    }
+    if (body.ctdbillingtype !== undefined) {
+      fields.push("ctdbillingtype = ?");
+      values.push(Number(body.ctdbillingtype));
+    }
+    if (body.timezoneid !== undefined) {
+      fields.push("timezoneid = ?");
+      values.push(String(body.timezoneid));
+    }
+    if (body.workday !== undefined) {
+      fields.push("workday = ?");
+      values.push(Number(body.workday));
+    }
+    if (body.feetimeaverage !== undefined) {
+      fields.push("feetimeaverage = ?");
+      values.push(Number(body.feetimeaverage));
+    }
+    if (body.feetimeaveragenonwork !== undefined) {
+      fields.push("feetimeaveragenonwork = ?");
+      values.push(Number(body.feetimeaveragenonwork));
+    }
+    if (body.feetimedays !== undefined) {
+      fields.push("feetimedays = ?");
+      values.push(Number(body.feetimedays));
+    }
+    if (body.feetimedaysnonwork !== undefined) {
+      fields.push("feetimedaysnonwork = ?");
+      values.push(Number(body.feetimedaysnonwork));
+    }
+    if (body.feetimetoday !== undefined) {
+      fields.push("feetimetoday = ?");
+      values.push(Number(body.feetimetoday));
+    }
+    if (body.customerId !== undefined) {
+      fields.push("customer_id = ?");
+      values.push(Number(body.customerId));
+    }
+    if (body.calendarId !== undefined) {
+      fields.push("calendar_id = ?");
+      values.push(Number(body.calendarId));
+    }
 
     // Contact details: build memo JSON merging with existing
     const hasContact = body.phone !== undefined || body.company !== undefined || body.address !== undefined ||

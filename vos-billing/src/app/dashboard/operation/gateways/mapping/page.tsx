@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { GitBranch, Search, RefreshCw, Server, Shield, Users, Plus, Edit2, Trash2, X, ArrowLeft, Download, Settings2, Route, Radio, Clock } from "lucide-react";
 import DataTable from "@/components/DataTable";
+import { clampInt, CAPACITY_RANGE, PRIORITY_RANGE } from "@/lib/validation";
 
 interface MappingGateway {
   id: number;
@@ -46,6 +47,71 @@ interface MappingGateway {
   scheduledCalloutPrefixes: string;
   scheduledRewriteRulesOut: string;
   scheduledCapacity: string;
+  callerCityE164Check: number;
+  calleeCityE164Check: number;
+  rewriteRulesInMobileArea: string;
+  dtmfSendMethodH323: number;
+  dtmfReceivePayloadType: number;
+  dtmfSendPayloadTypeH323: number;
+  dtmfSendPayloadTypeSip: number;
+  q931ProgressIndicator: number;
+  callFailedSipCode: string;
+  callFailedQ931CauseValue: string;
+  sipResponseAddressMethod: number;
+  sipRequestAddressMethod: number;
+  sipRemoteRingSignal: number;
+  sipCalleeE164Domain: number;
+  sipCallerE164Domain: number;
+  h323CalleeE164Domain: number;
+  h323CallerE164Domain: number;
+  allowPhoneBilling: number;
+  allowBindedE164Billing: number;
+  enablePhoneSetting: number;
+  sipAuthenticationMethod: number;
+  sipAuthenticationUser: string;
+  callTransferBillingMode: number;
+  bitsOfH323Config: number;
+  bitsOfSipConfig: number;
+  bitsOfConfig: number;
+  callerAllowLength: number;
+  calleeAllowLength: number;
+  callerLimitE164Groups: string;
+  calleeLimitE164Groups: string;
+  minProfitPercent: number;
+  firstRoutePolicy: number;
+  secondRoutePolicy: number;
+  h323G729SendMode: number;
+  sipG729SendMode: number;
+  sipG729AnnexB: number;
+  sipG723AnnexA: number;
+  calleeE164Restrict: number;
+  timeoutCallRedirect: number;
+  maxCallRate: number;
+  maxCallRateUnit: number;
+  timeoutRedirectE164: string;
+  calculateQuality: number;
+  denySameCityCodes: string;
+  checkMobileArea: string;
+  externalRewriteType: number;
+  externalRewriteTrigger: string;
+  sipRemotePartyIdScreen: number;
+  sipE164DisplayFrom: number;
+  sipExtraHeader: string;
+  tryProtectRouteDelay: number;
+  forwardSignalRewriteE164Group: string;
+  maxSecondRates: number;
+  lrnEatPrefixLength: number;
+  lrnFailureAction: number;
+  lrnInterstateBillingPrefix: string;
+  lrnUndeterminedBillingPrefix: string;
+  traceEndTime: number;
+  aasSampling: number;
+  aasWordCategory: string;
+  language: string;
+  rewritePrefixAddOutCallee: string;
+  externalNumberVerifyBits: number;
+  externalNumberVerifyRewriteCaller: string;
+  externalNumberVerifyRewriteCallee: string;
 }
 
 const LOCK_LABELS: Record<number, string> = { 0: "No Lock", 1: "Locked" };
@@ -93,6 +159,71 @@ export default function MappingGatewayPage() {
     mediaCheckDirection: 0, timeoutCallProceeding: 30,
     maxCallDurationLower: 0, maxCallDurationUpper: 0,
     scheduledCalloutPrefixes: "", scheduledRewriteRulesOut: "", scheduledCapacity: "",
+    callerCityE164Check: 0,
+    calleeCityE164Check: 0,
+    rewriteRulesInMobileArea: "",
+    dtmfSendMethodH323: 0,
+    dtmfReceivePayloadType: 0,
+    dtmfSendPayloadTypeH323: 0,
+    dtmfSendPayloadTypeSip: 0,
+    q931ProgressIndicator: 0,
+    callFailedSipCode: "",
+    callFailedQ931CauseValue: "",
+    sipResponseAddressMethod: 0,
+    sipRequestAddressMethod: 0,
+    sipRemoteRingSignal: 0,
+    sipCalleeE164Domain: 0,
+    sipCallerE164Domain: 0,
+    h323CalleeE164Domain: 0,
+    h323CallerE164Domain: 0,
+    allowPhoneBilling: 0,
+    allowBindedE164Billing: 0,
+    enablePhoneSetting: 0,
+    sipAuthenticationMethod: 0,
+    sipAuthenticationUser: "",
+    callTransferBillingMode: 0,
+    bitsOfH323Config: 0,
+    bitsOfSipConfig: 0,
+    bitsOfConfig: 0,
+    callerAllowLength: 0,
+    calleeAllowLength: 0,
+    callerLimitE164Groups: "",
+    calleeLimitE164Groups: "",
+    minProfitPercent: 0,
+    firstRoutePolicy: 0,
+    secondRoutePolicy: 0,
+    h323G729SendMode: 0,
+    sipG729SendMode: 0,
+    sipG729AnnexB: 0,
+    sipG723AnnexA: 0,
+    calleeE164Restrict: 0,
+    timeoutCallRedirect: 0,
+    maxCallRate: 0,
+    maxCallRateUnit: 0,
+    timeoutRedirectE164: "",
+    calculateQuality: 0,
+    denySameCityCodes: "",
+    checkMobileArea: "",
+    externalRewriteType: 0,
+    externalRewriteTrigger: "",
+    sipRemotePartyIdScreen: 0,
+    sipE164DisplayFrom: 0,
+    sipExtraHeader: "",
+    tryProtectRouteDelay: 0,
+    forwardSignalRewriteE164Group: "",
+    maxSecondRates: 0.0,
+    lrnEatPrefixLength: 0,
+    lrnFailureAction: 0,
+    lrnInterstateBillingPrefix: "",
+    lrnUndeterminedBillingPrefix: "",
+    traceEndTime: 0,
+    aasSampling: 0.0,
+    aasWordCategory: "",
+    language: "",
+    rewritePrefixAddOutCallee: "",
+    externalNumberVerifyBits: 0,
+    externalNumberVerifyRewriteCaller: "",
+    externalNumberVerifyRewriteCallee: "",
   });
 
   const fetchGateways = async () => {
@@ -125,6 +256,71 @@ export default function MappingGatewayPage() {
     mediaCheckDirection: 0, timeoutCallProceeding: 30,
     maxCallDurationLower: 0, maxCallDurationUpper: 0,
     scheduledCalloutPrefixes: "", scheduledRewriteRulesOut: "", scheduledCapacity: "",
+    callerCityE164Check: 0,
+    calleeCityE164Check: 0,
+    rewriteRulesInMobileArea: "",
+    dtmfSendMethodH323: 0,
+    dtmfReceivePayloadType: 0,
+    dtmfSendPayloadTypeH323: 0,
+    dtmfSendPayloadTypeSip: 0,
+    q931ProgressIndicator: 0,
+    callFailedSipCode: "",
+    callFailedQ931CauseValue: "",
+    sipResponseAddressMethod: 0,
+    sipRequestAddressMethod: 0,
+    sipRemoteRingSignal: 0,
+    sipCalleeE164Domain: 0,
+    sipCallerE164Domain: 0,
+    h323CalleeE164Domain: 0,
+    h323CallerE164Domain: 0,
+    allowPhoneBilling: 0,
+    allowBindedE164Billing: 0,
+    enablePhoneSetting: 0,
+    sipAuthenticationMethod: 0,
+    sipAuthenticationUser: "",
+    callTransferBillingMode: 0,
+    bitsOfH323Config: 0,
+    bitsOfSipConfig: 0,
+    bitsOfConfig: 0,
+    callerAllowLength: 0,
+    calleeAllowLength: 0,
+    callerLimitE164Groups: "",
+    calleeLimitE164Groups: "",
+    minProfitPercent: 0,
+    firstRoutePolicy: 0,
+    secondRoutePolicy: 0,
+    h323G729SendMode: 0,
+    sipG729SendMode: 0,
+    sipG729AnnexB: 0,
+    sipG723AnnexA: 0,
+    calleeE164Restrict: 0,
+    timeoutCallRedirect: 0,
+    maxCallRate: 0,
+    maxCallRateUnit: 0,
+    timeoutRedirectE164: "",
+    calculateQuality: 0,
+    denySameCityCodes: "",
+    checkMobileArea: "",
+    externalRewriteType: 0,
+    externalRewriteTrigger: "",
+    sipRemotePartyIdScreen: 0,
+    sipE164DisplayFrom: 0,
+    sipExtraHeader: "",
+    tryProtectRouteDelay: 0,
+    forwardSignalRewriteE164Group: "",
+    maxSecondRates: 0.0,
+    lrnEatPrefixLength: 0,
+    lrnFailureAction: 0,
+    lrnInterstateBillingPrefix: "",
+    lrnUndeterminedBillingPrefix: "",
+    traceEndTime: 0,
+    aasSampling: 0.0,
+    aasWordCategory: "",
+    language: "",
+    rewritePrefixAddOutCallee: "",
+    externalNumberVerifyBits: 0,
+    externalNumberVerifyRewriteCaller: "",
+    externalNumberVerifyRewriteCallee: "",
   });
 
   const handleSave = async () => {
@@ -174,6 +370,71 @@ export default function MappingGatewayPage() {
       scheduledCalloutPrefixes: g.scheduledCalloutPrefixes || "",
       scheduledRewriteRulesOut: g.scheduledRewriteRulesOut || "",
       scheduledCapacity: g.scheduledCapacity || "",
+      callerCityE164Check: g.callerCityE164Check ?? 0,
+      calleeCityE164Check: g.calleeCityE164Check ?? 0,
+      rewriteRulesInMobileArea: g.rewriteRulesInMobileArea || "",
+      dtmfSendMethodH323: g.dtmfSendMethodH323 ?? 0,
+      dtmfReceivePayloadType: g.dtmfReceivePayloadType ?? 0,
+      dtmfSendPayloadTypeH323: g.dtmfSendPayloadTypeH323 ?? 0,
+      dtmfSendPayloadTypeSip: g.dtmfSendPayloadTypeSip ?? 0,
+      q931ProgressIndicator: g.q931ProgressIndicator ?? 0,
+      callFailedSipCode: g.callFailedSipCode || "",
+      callFailedQ931CauseValue: g.callFailedQ931CauseValue || "",
+      sipResponseAddressMethod: g.sipResponseAddressMethod ?? 0,
+      sipRequestAddressMethod: g.sipRequestAddressMethod ?? 0,
+      sipRemoteRingSignal: g.sipRemoteRingSignal ?? 0,
+      sipCalleeE164Domain: g.sipCalleeE164Domain ?? 0,
+      sipCallerE164Domain: g.sipCallerE164Domain ?? 0,
+      h323CalleeE164Domain: g.h323CalleeE164Domain ?? 0,
+      h323CallerE164Domain: g.h323CallerE164Domain ?? 0,
+      allowPhoneBilling: g.allowPhoneBilling ?? 0,
+      allowBindedE164Billing: g.allowBindedE164Billing ?? 0,
+      enablePhoneSetting: g.enablePhoneSetting ?? 0,
+      sipAuthenticationMethod: g.sipAuthenticationMethod ?? 0,
+      sipAuthenticationUser: g.sipAuthenticationUser || "",
+      callTransferBillingMode: g.callTransferBillingMode ?? 0,
+      bitsOfH323Config: g.bitsOfH323Config ?? 0,
+      bitsOfSipConfig: g.bitsOfSipConfig ?? 0,
+      bitsOfConfig: g.bitsOfConfig ?? 0,
+      callerAllowLength: g.callerAllowLength ?? 0,
+      calleeAllowLength: g.calleeAllowLength ?? 0,
+      callerLimitE164Groups: g.callerLimitE164Groups || "",
+      calleeLimitE164Groups: g.calleeLimitE164Groups || "",
+      minProfitPercent: g.minProfitPercent ?? 0,
+      firstRoutePolicy: g.firstRoutePolicy ?? 0,
+      secondRoutePolicy: g.secondRoutePolicy ?? 0,
+      h323G729SendMode: g.h323G729SendMode ?? 0,
+      sipG729SendMode: g.sipG729SendMode ?? 0,
+      sipG729AnnexB: g.sipG729AnnexB ?? 0,
+      sipG723AnnexA: g.sipG723AnnexA ?? 0,
+      calleeE164Restrict: g.calleeE164Restrict ?? 0,
+      timeoutCallRedirect: g.timeoutCallRedirect ?? 0,
+      maxCallRate: g.maxCallRate ?? 0,
+      maxCallRateUnit: g.maxCallRateUnit ?? 0,
+      timeoutRedirectE164: g.timeoutRedirectE164 || "",
+      calculateQuality: g.calculateQuality ?? 0,
+      denySameCityCodes: g.denySameCityCodes || "",
+      checkMobileArea: g.checkMobileArea || "",
+      externalRewriteType: g.externalRewriteType ?? 0,
+      externalRewriteTrigger: g.externalRewriteTrigger || "",
+      sipRemotePartyIdScreen: g.sipRemotePartyIdScreen ?? 0,
+      sipE164DisplayFrom: g.sipE164DisplayFrom ?? 0,
+      sipExtraHeader: g.sipExtraHeader || "",
+      tryProtectRouteDelay: g.tryProtectRouteDelay ?? 0,
+      forwardSignalRewriteE164Group: g.forwardSignalRewriteE164Group || "",
+      maxSecondRates: g.maxSecondRates ?? 0.0,
+      lrnEatPrefixLength: g.lrnEatPrefixLength ?? 0,
+      lrnFailureAction: g.lrnFailureAction ?? 0,
+      lrnInterstateBillingPrefix: g.lrnInterstateBillingPrefix || "",
+      lrnUndeterminedBillingPrefix: g.lrnUndeterminedBillingPrefix || "",
+      traceEndTime: g.traceEndTime ?? 0,
+      aasSampling: g.aasSampling ?? 0.0,
+      aasWordCategory: g.aasWordCategory || "",
+      language: g.language || "",
+      rewritePrefixAddOutCallee: g.rewritePrefixAddOutCallee || "",
+      externalNumberVerifyBits: g.externalNumberVerifyBits ?? 0,
+      externalNumberVerifyRewriteCaller: g.externalNumberVerifyRewriteCaller || "",
+      externalNumberVerifyRewriteCallee: g.externalNumberVerifyRewriteCallee || "",
     });
     setActiveTab("general");
     setShowModal(true);
@@ -363,8 +624,8 @@ export default function MappingGatewayPage() {
                     <div><label className="block text-xs font-medium text-surface-400 mb-1">Remote IPs</label><input value={form.remoteIps} onChange={e => setForm({ ...form, remoteIps: e.target.value })} placeholder="e.g. 1.2.3.4,5.6.7.8" className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50 font-mono" /></div>
                     <div><label className="block text-xs font-medium text-surface-400 mb-1">Config Password</label><input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
                     <div><label className="block text-xs font-medium text-surface-400 mb-1">Self-Svc Password</label><input type="password" value={form.customerPassword} onChange={e => setForm({ ...form, customerPassword: e.target.value })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
-                    <div><label className="block text-xs font-medium text-surface-400 mb-1">Capacity</label><input type="number" value={form.capacity} onChange={e => setForm({ ...form, capacity: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
-                    <div><label className="block text-xs font-medium text-surface-400 mb-1">Priority</label><input type="number" value={form.priority} onChange={e => setForm({ ...form, priority: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                    <div><label className="block text-xs font-medium text-surface-400 mb-1">Capacity</label><input type="number" min={0} max={100000} value={form.capacity} onChange={e => setForm({ ...form, capacity: clampInt(parseInt(e.target.value) || 0, CAPACITY_RANGE.min, CAPACITY_RANGE.max, 0) })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                    <div><label className="block text-xs font-medium text-surface-400 mb-1">Priority</label><input type="number" min={0} max={9999} value={form.priority} onChange={e => setForm({ ...form, priority: clampInt(parseInt(e.target.value) || 0, PRIORITY_RANGE.min, PRIORITY_RANGE.max, 0) })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
                     <div>
                       <label className="block text-xs font-medium text-surface-400 mb-1">Media Proxy (RTP)</label>
                       <select value={form.rtpForwardType} onChange={e => setForm({ ...form, rtpForwardType: parseInt(e.target.value) })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none">
@@ -464,15 +725,15 @@ export default function MappingGatewayPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-surface-400 mb-1">Timeout Call Proceeding (s)</label>
-                      <input type="number" value={form.timeoutCallProceeding} onChange={e => setForm({ ...form, timeoutCallProceeding: parseInt(e.target.value) || 30 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" />
+                      <input type="number" min={1} max={3600} value={form.timeoutCallProceeding} onChange={e => setForm({ ...form, timeoutCallProceeding: parseInt(e.target.value) || 30 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-surface-400 mb-1">Max Call Duration Lower (s)</label>
-                      <input type="number" value={form.maxCallDurationLower} onChange={e => setForm({ ...form, maxCallDurationLower: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" />
+                      <input type="number" min={0} max={99999} value={form.maxCallDurationLower} onChange={e => setForm({ ...form, maxCallDurationLower: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-surface-400 mb-1">Max Call Duration Upper (s)</label>
-                      <input type="number" value={form.maxCallDurationUpper} onChange={e => setForm({ ...form, maxCallDurationUpper: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" />
+                      <input type="number" min={0} max={99999} value={form.maxCallDurationUpper} onChange={e => setForm({ ...form, maxCallDurationUpper: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" />
                     </div>
                   </div>
                 </div>

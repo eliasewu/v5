@@ -11,6 +11,8 @@
     "test:unit": "vitest run --exclude 'src/app/api/**/*.test.ts'",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
+    "migrate": "npx tsx src/scripts/migrate.ts",
+    "migrate:status": "npx tsx src/scripts/migrate.ts --status",
     "deploy": "sudo systemctl restart vos-billing"
   },
   "dependencies": {

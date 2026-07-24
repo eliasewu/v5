@@ -55,6 +55,11 @@ export async function GET(request: NextRequest) {
     const sql = `SELECT c.id, c.account, c.name, c.money, c.limitmoney, c.type, c.status,
       c.starttime, c.lastupdatetime, c.feerategroup_id, c.feerategroupprivate_id,
       c.memo, c.alarmemail,
+      c.bitsofconfig, c.validtime, c.locktype, c.todayconsumption,
+      c.phonebookserialid, c.phonebooklimit, c.ctdbillingtype, c.timezoneid,
+      c.workday, c.feetimeaverage, c.feetimeaveragenonwork,
+      c.feetimedays, c.feetimedaysnonwork, c.feetimetoday,
+      c.customer_id, c.calendar_id,
       g1.name AS feerate_group_name, g2.name AS feerate_group_private_name,
       COALESCE(mgw.cnt, 0) AS mapping_gw_count,
       COALESCE(rgw.cnt, 0) AS routing_gw_count,
@@ -105,6 +110,22 @@ export async function GET(request: NextRequest) {
       bankAccount: contact.bankAccount || contact.bank || "",
       cc: contact.cc || "",
       bcc: contact.bcc || "",
+      bitsofconfig: r.bitsofconfig ?? 0,
+      validtime: r.validtime ?? 0,
+      locktype: r.locktype ?? 0,
+      todayconsumption: Number(r.todayconsumption) || 0,
+      phonebookserialid: r.phonebookserialid ?? 0,
+      phonebooklimit: r.phonebooklimit ?? 0,
+      ctdbillingtype: r.ctdbillingtype ?? 0,
+      timezoneid: r.timezoneid || "",
+      workday: r.workday ?? 1,
+      feetimeaverage: r.feetimeaverage ?? 0,
+      feetimeaveragenonwork: r.feetimeaveragenonwork ?? 0,
+      feetimedays: r.feetimedays ?? 0,
+      feetimedaysnonwork: r.feetimedaysnonwork ?? 0,
+      feetimetoday: r.feetimetoday ?? 0,
+      customerId: r.customer_id ?? 0,
+      calendarId: r.calendar_id ?? 0,
     }});
 
     return NextResponse.json({ accounts });
@@ -139,8 +160,8 @@ export async function POST(request: NextRequest) {
     const memoStr = Object.keys(memo).length > 0 ? JSON.stringify(memo) : "";
 
     await executeVos(
-      `INSERT INTO e_customer (id, customer_id, account, name, money, limitmoney, type, status, starttime, lastupdatetime, feerategroup_id, feerategroupprivate_id, alarmemail, memo, locktype)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO e_customer (id, customer_id, account, name, money, limitmoney, type, status, starttime, lastupdatetime, feerategroup_id, feerategroupprivate_id, alarmemail, memo, locktype, bitsofconfig, validtime, todayconsumption, phonebookserialid, phonebooklimit, ctdbillingtype, timezoneid, workday, feetimeaverage, feetimeaveragenonwork, feetimedays, feetimedaysnonwork, feetimetoday, calendar_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nextId,
         nextId,
@@ -156,6 +177,20 @@ export async function POST(request: NextRequest) {
         Number(body.feerateGroupPrivateId) || 0,
         body.email || "",
         memoStr,
+        body.bitsofconfig ?? 0,
+        body.validtime ?? 0,
+        Number(body.todayconsumption) || 0,
+        body.phonebookserialid ?? 0,
+        body.phonebooklimit ?? 0,
+        body.ctdbillingtype ?? 0,
+        body.timezoneid || "",
+        body.workday ?? 1,
+        body.feetimeaverage ?? 0,
+        body.feetimeaveragenonwork ?? 0,
+        body.feetimedays ?? 0,
+        body.feetimedaysnonwork ?? 0,
+        body.feetimetoday ?? 0,
+        body.calendarId ?? 0,
       ]
     );
 
