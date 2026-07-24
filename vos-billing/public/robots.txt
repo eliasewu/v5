@@ -1,0 +1,20 @@
+User-agent: *
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /admin/
+Allow: /
+
+User-agent: HTTrack
+Disallow: /
+
+User-agent: wget
+Disallow: /
+
+User-agent: curl
+Disallow: /
+
+User-agent: python-requests
+Disallow: /
+
+User-agent: Go-http-client
+Disallow: /
