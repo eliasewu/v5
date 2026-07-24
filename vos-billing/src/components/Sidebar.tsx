@@ -45,35 +45,87 @@ import {
   Shield,
   X,
   Mail,
+  RefreshCw,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function VersionDisplay({ collapsed }: { collapsed: boolean }) {
-  const [version, setVersion] = useState<{ tag: string; commit: string; date: string } | null>(null);
+  const [version, setVersion] = useState<{ tag: string; commit: string; date: string; behind: number; ahead: number } | null>(null);
+  const [checking, setChecking] = useState(false);
 
-  useEffect(() => {
+  const fetchVersion = () => {
     fetch("/api/version")
       .then(r => r.json())
       .then(d => setVersion(d))
       .catch(() => {});
-  }, []);
+  };
+
+  useEffect(() => { fetchVersion(); }, []);
+
+  const checkUpdates = async () => {
+    setChecking(true);
+    try {
+      const res = await fetch("/api/version", { method: "POST" });
+      const data = await res.json();
+      setVersion(data);
+    } catch { /* ignore */ }
+    finally { setChecking(false); }
+  };
 
   if (!version) return null;
 
   const label = version.tag || version.commit;
+  const hasUpdates = version.behind > 0;
+  const unpushed = version.ahead > 0;
 
   return (
     <div className="border-t border-brand-500 px-3 py-2">
       {collapsed ? (
-        <div className="flex justify-center" title={`${label} (${version.date})`}>
-          <span className="text-[10px] font-mono text-white/40">{version.commit}</span>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-[10px] font-mono text-white/40" title={`${label} (${version.date})`}>
+            {version.commit}
+          </span>
+          <button
+            onClick={checkUpdates}
+            disabled={checking}
+            className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/60 transition-colors"
+            title="Check for updates"
+          >
+            <RefreshCw className={`w-3 h-3 ${checking ? "animate-spin" : ""}`} />
+          </button>
+          {hasUpdates && <span className="text-[8px] text-amber-400 font-bold">↓{version.behind}</span>}
         </div>
       ) : (
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono text-white/50">
-            {label}
-          </span>
-          <span className="text-[9px] text-white/30">{version.date}</span>
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono text-white/50">{label}</span>
+            <div className="flex items-center gap-1">
+              {unpushed && (
+                <span className="text-[8px] text-amber-400/70 font-mono" title={`${version.ahead} unpushed`}>
+                  ↑{version.ahead}
+                </span>
+              )}
+              {hasUpdates && (
+                <span className="text-[8px] text-amber-400 font-bold" title={`${version.behind} update(s) available`}>
+                  ↓{version.behind}
+                </span>
+              )}
+              <span className="text-[9px] text-white/30">{version.date}</span>
+              <button
+                onClick={checkUpdates}
+                disabled={checking}
+                className="p-0.5 rounded hover:bg-white/10 text-white/30 hover:text-white/60 transition-colors"
+                title="Check for updates (fetch from origin)"
+              >
+                <RefreshCw className={`w-3 h-3 ${checking ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+          </div>
+          {hasUpdates && (
+            <div className="mt-1 text-[9px] text-amber-400/80">
+              {version.behind} update{version.behind !== 1 ? "s" : ""} available — run deploy.sh
+            </div>
+          )}
         </div>
       )}
     </div>
