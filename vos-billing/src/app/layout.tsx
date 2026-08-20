@@ -4,12 +4,11 @@ import ThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Net2App VOS Billing",
-  description:
-    "Modern web-based management platform for Net2App VOS Billing system",
+  title: "Net2App V5",
+  description: "Modern web-based management platform for Net2App V5 billing system",
   appleWebApp: {
     capable: true,
-    title: "VOS Billing",
+    title: "Net2App V5",
   },
 };
 

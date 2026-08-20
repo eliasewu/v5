@@ -12,7 +12,8 @@ function getVersion() {
 
   try {
     const commit = run("git rev-parse --short HEAD");
-    const tag = run("git describe --tags --exact-match 2>/dev/null || echo ''");
+    // Highest semver tag on HEAD (handles multiple tags pointing at the same commit)
+    const tag = run("git tag --points-at HEAD 2>/dev/null | sort -V | tail -1 || echo ''");
     const date = run("git log -1 --format=%cd --date=short");
 
     // Compare vs origin (local ref — no fetch for speed)

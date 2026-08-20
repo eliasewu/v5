@@ -1,4 +1,4 @@
-# VOS3000 Billing Platform
+# Net2App V5 — Billing Platform (VOS3000)
 
 A modern HTTPS web dashboard for managing the VOS3000 VoIP switch — account management, rate management, IP whitelist firewall, invoices, and more. Built with Next.js 16, React 19, and Tailwind CSS 4.
 

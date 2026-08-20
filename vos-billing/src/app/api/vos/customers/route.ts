@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitId } from "@/lib/mit-ids";
 
 export async function GET(request: NextRequest) {
   const user = await verifySession();
@@ -67,9 +68,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // VOS3000 e_customer.id is NOT auto-increment — manually get next ID
-    const [maxRow] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_customer");
-    const nextId = Number(maxRow?.next_id || 1);
+    // e_customer.id is an MIT node id — allocate a globally-unique id.
+    const nextId = await nextMitId();
 
     const result = await executeVos(
       `INSERT INTO e_customer (id, customer_id, account, name, status, money, limitmoney, memo, type, locktype)

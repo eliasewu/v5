@@ -62,7 +62,7 @@ sudo tee "$MSMTPRC" > /dev/null << MSMTPEOF
 # Do not edit manually — SMTP settings come from e_sysparam DB
 
 defaults
-auth           on
+auth           login
 tls            $TLS
 tls_starttls   $TLS_STARTTLS
 $TLS_TRUST

@@ -7,7 +7,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const rows = await queryVos<any>("SELECT a.*, COALESCE(pa.name,'') AS parent_name FROM e_agent a LEFT JOIN e_agent pa ON a.parent_id=pa.id ORDER BY a.id");
-    return NextResponse.json({ agents: (rows as any[]).map(r => ({ id: r.id, name: r.name, account: r.account, money: r.money, limitMoney: r.limitmoney, rate: r.rate, status: r.status, parentId: r.parent_id, parentName: r.parent_name, memo: r.memo })) });
+    return NextResponse.json({ agents: (rows as any[]).map(r => ({ id: r.id, name: r.name, account: r.account, money: Number(r.money ?? 0), limitMoney: Number(r.limitmoney ?? 0), rate: Number(r.rate ?? 0), status: r.status, parentId: r.parent_id, parentName: r.parent_name, memo: r.memo })) });
   } catch { return NextResponse.json({ error: "Failed" }, { status: 500 }); }
 }
 

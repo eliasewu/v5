@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitId } from "@/lib/mit-ids";
 
 export async function GET(request: NextRequest) {
   try {
@@ -149,8 +150,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const [maxRow] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_gatewaymapping");
-    const nextId = Number(maxRow?.next_id || 1);
+    // Gateway ids are MIT node ids — allocate a globally-unique id.
+    const nextId = await nextMitId();
 
     await executeVos(
       `INSERT INTO e_gatewaymapping (id, name, password, customerpassword, locktype, calllevel, capacity, priority, registertype, remoteips, rtpforwardtype, gatewaygroups, routinggatewaygroups, memo, customer_id, mbx_id)

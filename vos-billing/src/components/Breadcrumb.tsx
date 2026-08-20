@@ -77,9 +77,38 @@ const LABEL_MAP: Record<string, string> = {
   "phone-card": "Phone Card",
   monitoring: "Monitoring",
   settings: "Settings",
+  "network-test": "Network Test",
+  registration: "Registration Management",
+  domains: "Domain Management",
+  sections: "Number Section Query",
+  "mobile-area": "Mobile Area",
+  "city-code": "City Code",
+  "area-info": "Area Information",
+  "limit-groups": "Black/White List Group",
+  "system-whitelist": "System White List",
+  "terminal-blacklist": "Terminal Blacklist Policy",
+  "web-access": "Web Access Control",
+  equipment: "Web Service Equipment",
+  "online-users": "Online User",
+  privileges: "User Privilege Template",
+  history: "History Alarm",
+  calendar: "Work Calendar",
 };
 
-function labelFor(segment: string): string {
+function labelFor(segment: string, pathname: string): string {
+  // Path-specific labels that depend on the full path (segment reused across sections)
+  if (segment === "management") {
+    return pathname.includes("/reports/management") ? "Report Management" : "Cards Management";
+  }
+  if (segment === "system") {
+    return pathname.includes("/system/") ? "System" : "System Alarm";
+  }
+  if (segment === "history") {
+    return pathname.includes("/alarms/history") ? "History Alarm" : "History";
+  }
+  if (segment === "sections") {
+    return pathname.includes("/numbers/sections") ? "Number Section Query" : "Sections";
+  }
   if (LABEL_MAP[segment]) return LABEL_MAP[segment];
   // Fallback: capitalize and replace hyphens
   return segment
@@ -99,7 +128,7 @@ export default function Breadcrumb() {
 
   for (let i = 0; i < segments.length; i++) {
     const href = "/" + segments.slice(0, i + 1).join("/");
-    const label = labelFor(segments[i]);
+    const label = labelFor(segments[i], pathname);
     crumbs.push({
       label,
       href,

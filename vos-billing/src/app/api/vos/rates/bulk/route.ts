@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitIds } from "@/lib/mit-ids";
 
 export async function POST(request: NextRequest) {
   const user = await verifySession();
@@ -17,15 +18,18 @@ export async function POST(request: NextRequest) {
 
     let succeeded = 0;
     const errors: string[] = [];
+    // e_feerate.id is an MIT node id — allocate a block of globally-unique ids.
+    const ids = await nextMitIds(rates.length);
 
-    for (const r of rates) {
+    for (let i = 0; i < rates.length; i++) {
+      const r = rates[i];
       if (r.prefix === undefined || r.prefix === null) { errors.push("Missing prefix"); continue; }
       try {
         await executeVos(
-          `INSERT INTO e_feerate (feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO e_feerate (id, feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            Number(feerategroup_id), String(r.prefix), String(r.areacode || ""),
+            ids[i], Number(feerategroup_id), String(r.prefix), String(r.areacode || ""),
             Number(r.locktype) || 0, Number(r.fee) || 0, Number(r.tax) || 0,
             Number(r.period) || 0, Number(r.ivrfee) || 0, Number(r.ivrperiod) || 0,
             Number(r.type) || 0,

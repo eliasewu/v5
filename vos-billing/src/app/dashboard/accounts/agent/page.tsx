@@ -32,13 +32,16 @@ export default function AgentAccountPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Convert percent input → fraction for DB (rate column stores e.g. 0.05 = 5%)
+      if (Number(form.rate) > 999) { setError("Commission rate cannot exceed 999%"); setSaving(false); return; }
+      const payload = { ...form, rate: Number(form.rate || 0) / 100 };
       if (editingAgent) {
-        const res = await fetch("/api/vos/agents", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingAgent.id, ...form }) });
+        const res = await fetch("/api/vos/agents", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editingAgent.id, ...payload }) });
         const data = await res.json();
         if (data.error) setError(data.error);
         else { setShowModal(false); setEditingAgent(null); fetchAgents(); }
       } else {
-        const res = await fetch("/api/vos/agents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        const res = await fetch("/api/vos/agents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         const data = await res.json();
         if (data.error) setError(data.error);
         else { setShowModal(false); setEditingAgent(null); fetchAgents(); }
@@ -72,7 +75,7 @@ export default function AgentAccountPage() {
 
   const openEdit = (a: Agent) => {
     setEditingAgent(a);
-    setForm({ name: a.name, account: a.account, password: "", money: a.money, limitMoney: a.limitMoney, rate: a.rate, status: a.status, parentId: a.parentId, memo: a.memo || "" });
+    setForm({ name: a.name, account: a.account, password: "", money: Number(a.money) || 0, limitMoney: Number(a.limitMoney) || 0, rate: Number(a.rate) * 100 || 0, status: a.status, parentId: a.parentId, memo: a.memo || "" });
     setShowModal(true);
   };
 
@@ -82,8 +85,8 @@ export default function AgentAccountPage() {
     setShowModal(true);
   };
 
-  const formatMoney = (v: number) => `$${v.toFixed(4)}`;
-  const totalBalance = agents.reduce((s, a) => s + a.money, 0);
+  const formatMoney = (v: number) => `$${Number(v || 0).toFixed(4)}`;
+  const totalBalance = agents.reduce((s, a) => s + Number(a.money), 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -108,11 +111,11 @@ export default function AgentAccountPage() {
           { key: "id", label: "#", render: (a: Agent) => <span className="text-surface-500 text-xs">{a.id}</span> },
           { key: "name", label: "Name", render: (a: Agent) => <span className="text-surface-50 font-medium">{a.name}</span> },
           { key: "account", label: "Account", render: (a: Agent) => <span className="text-surface-300 font-mono text-xs">{a.account}</span> },
-          { key: "money", label: "Balance", textAlign: "right" as const, render: moneyRender((a: Agent) => a.money) },
+          { key: "money", label: "Balance", textAlign: "right" as const, render: moneyRender((a: Agent) => Number(a.money) || 0) },
           { key: "limitMoney", label: "Limit", textAlign: "right" as const, render: (a: Agent) => (
-            <span className="text-surface-300 font-mono text-sm">${a.limitMoney.toFixed(2)}</span>
+            <span className="text-surface-300 font-mono text-sm">${Number(a.limitMoney || 0).toFixed(2)}</span>
           )},
-          { key: "rate", label: "Rate %", textAlign: "right" as const, render: (a: Agent) => <span className="text-surface-300">{a.rate}%</span> },
+          { key: "rate", label: "Rate %", textAlign: "right" as const, render: (a: Agent) => <span className="text-surface-300">{(Number(a.rate) * 100).toFixed(2)}%</span> },
           { key: "status", label: "Status", textAlign: "center" as const, render: statusToggleRender({
             getId: (a) => a.id, getStatus: (a) => a.status, onToggle: handleToggleStatus, togglingIds,
             labels: { 0: "Active", 1: "Inactive" },
@@ -139,7 +142,7 @@ export default function AgentAccountPage() {
                 {!editingAgent && <div><label className="block text-xs font-medium text-surface-400 mb-1">Password</label><input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>}
                 <div><label className="block text-xs font-medium text-surface-400 mb-1">Balance</label><input type="number" step="0.0001" value={form.money} onChange={e => setForm({ ...form, money: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
                 <div><label className="block text-xs font-medium text-surface-400 mb-1">Credit Limit</label><input type="number" step="0.01" value={form.limitMoney} onChange={e => setForm({ ...form, limitMoney: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
-                <div><label className="block text-xs font-medium text-surface-400 mb-1">Commission Rate</label><input type="number" step="0.1" value={form.rate} onChange={e => setForm({ ...form, rate: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
+                <div><label className="block text-xs font-medium text-surface-400 mb-1">Commission Rate (%)</label><input type="number" step="0.1" max="999" value={form.rate} onChange={e => setForm({ ...form, rate: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50" /></div>
                 <div><label className="block text-xs font-medium text-surface-400 mb-1">Status</label><select value={form.status} onChange={e => setForm({ ...form, status: parseInt(e.target.value) })} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none"><option value={0}>Active</option><option value={1}>Inactive</option></select></div>
               </div>
               <div><label className="block text-xs font-medium text-surface-400 mb-1">Memo</label><textarea value={form.memo} onChange={e => setForm({ ...form, memo: e.target.value })} rows={2} className="w-full px-3 py-2 bg-surface-800 border border-surface-700/50 rounded-lg text-surface-50 text-sm focus:outline-none focus:border-brand-500/50 resize-none" /></div>

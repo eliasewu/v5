@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitId } from "@/lib/mit-ids";
 
 export async function GET() {
   const user = await verifySession();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
-    const rows = await queryVos<any>("SELECT p.*, c.customer_name FROM e_phone p LEFT JOIN e_customer c ON p.customer_id=c.id ORDER BY p.id");
+    const rows = await queryVos<any>("SELECT p.*, c.name AS customer_name FROM e_phone p LEFT JOIN e_customer c ON p.customer_id=c.id ORDER BY p.id");
     return NextResponse.json({ phones: (rows as any[]).map(r => ({ id: r.id, e164: r.e164, capacity: r.capacity, callLevel: r.calllevel, status: r.locktype, customerName: r.customer_name||null, customerId: r.customer_id||0, type: r.type||0, addtime: r.addtime||0, memo: r.memo||"" })) });
   } catch(e) { return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status: 500 }); }
 }
@@ -27,8 +28,8 @@ export async function POST(request: NextRequest) {
       
       for (const e164 of b.numbers) {
         try {
-          const [maxRow] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_phone");
-          const nextId = Number(maxRow?.next_id || 1);
+          // e_phone.id is an MIT node id — allocate a globally-unique id.
+          const nextId = await nextMitId();
           await executeVos(
             "INSERT INTO e_phone (id, e164, password, capacity, calllevel, locktype, customer_id) VALUES (?,?,?,?,?,?,?)",
             [nextId, String(e164), password, capacity, callLevel, 0, customerId]
@@ -41,9 +42,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, results, total: b.numbers.length, succeeded: results.filter(r => !r.error).length });
     }
     
-    // Single creation
-    const [maxRow] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_phone");
-    const nextId = Number(maxRow?.next_id || 1);
+    // Single creation — e_phone.id is an MIT node id, allocate globally-unique.
+    const nextId = await nextMitId();
     await executeVos("INSERT INTO e_phone (id, e164, password, capacity, calllevel, locktype, customer_id) VALUES (?,?,?,?,?,?,?)", [nextId, b.e164||"", b.password||"", b.capacity||2, b.callLevel||0, 0, b.customerId||0]);
     return NextResponse.json({ success: true, id: nextId });
   } catch(e) { return NextResponse.json({ error: e instanceof Error ? e.message : "Failed" }, { status: 500 }); }

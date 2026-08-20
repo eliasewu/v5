@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitId } from "@/lib/mit-ids";
 
 export async function GET() {
   const user = await verifySession();
@@ -22,12 +23,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     if (!body.name) return NextResponse.json({ error: "Group name is required" }, { status: 400 });
 
-    const result = await executeVos(
-      "INSERT INTO e_feerategroup (name, fakeminute, isprivate, memo) VALUES (?, ?, ?, ?)",
-      [body.name, body.fakeMinute || 60, body.isPrivate || 0, body.memo || ""]
+    // e_feerategroup.id is an MIT node id — allocate a globally-unique id.
+    const id = await nextMitId();
+    await executeVos(
+      "INSERT INTO e_feerategroup (id, name, fakeminute, isprivate, memo) VALUES (?, ?, ?, ?, ?)",
+      [id, body.name, body.fakeMinute || 60, body.isPrivate || 0, body.memo || ""]
     );
 
-    const rows = await queryVos<any>("SELECT id, name, fakeminute, isprivate, memo FROM e_feerategroup WHERE id = ?", [(result as any).insertId]);
+    const rows = await queryVos<any>("SELECT id, name, fakeminute, isprivate, memo FROM e_feerategroup WHERE id = ?", [id]);
     return NextResponse.json({ success: true, group: rows[0] || null });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Failed to create group" }, { status: 500 });

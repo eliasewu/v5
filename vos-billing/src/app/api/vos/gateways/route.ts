@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitId } from "@/lib/mit-ids";
 
 const MAPPING_TABLE = "e_gatewaymapping";
 const ROUTING_TABLE = "e_gatewayrouting";
@@ -97,9 +98,8 @@ export async function POST(request: NextRequest) {
     const gwType = body.type || "mapping";
 
     const table = gwType === "routing" ? ROUTING_TABLE : MAPPING_TABLE;
-    // VOS3000 tables lack AUTO_INCREMENT — manually get next ID
-    const [maxRow] = await queryVos<any>(`SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM ${table}`);
-    const nextId = Number(maxRow?.next_id || 1);
+    // Gateway ids are MIT node ids — allocate a globally-unique id.
+    const nextId = await nextMitId();
 
     let result;
     if (gwType === "routing") {

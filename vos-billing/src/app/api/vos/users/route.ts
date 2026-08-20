@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession, hashGuiPassword } from "@/lib/auth";
+import { nextMitId } from "@/lib/mit-ids";
 
 // Rate limiter: max 5 requests per minute per IP for sensitive operations
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -90,11 +91,13 @@ export async function POST(request: NextRequest) {
     // Hash with bcrypt for GUI-managed users
     const hashedPassword = await hashGuiPassword(password);
 
-    const result = await executeVos(
-      "INSERT INTO e_user (loginname, username, password, level, locktype, expiretime, memo, limitmacs, macs, user_privilege_id) VALUES (?,?,?,?,?,?,?,?,?,?)",
-      [loginName, userName, hashedPassword, Number(b.level) || 0, Number(b.lockType) ?? 0, Number(b.expireTime) || 0, String(b.memo || "").slice(0, 255), Number(b.limitMacs) || 0, String(b.macs || "").slice(0, 500), Number(b.privilegeId) || 0]
+    // e_user.id is an MIT node id — allocate a globally-unique id.
+    const id = await nextMitId();
+    await executeVos(
+      "INSERT INTO e_user (id, loginname, username, password, level, locktype, expiretime, memo, limitmacs, macs, user_privilege_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+      [id, loginName, userName, hashedPassword, Number(b.level) || 0, Number(b.lockType) ?? 0, Number(b.expireTime) || 0, String(b.memo || "").slice(0, 255), Number(b.limitMacs) || 0, String(b.macs || "").slice(0, 500), Number(b.privilegeId) || 0]
     );
-    return NextResponse.json({ success: true, id: (result as any).insertId });
+    return NextResponse.json({ success: true, id });
   } catch (e: any) { return NextResponse.json({ error: e?.message }, { status: 500 }); }
 }
 

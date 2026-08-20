@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitIds } from "@/lib/mit-ids";
 
 export async function POST(request: NextRequest) {
   const user = await verifySession();
@@ -11,11 +12,14 @@ export async function POST(request: NextRequest) {
     if (!groupId || !rates || !rates.length) return NextResponse.json({ error: "No rates" }, { status: 400 });
     let succeeded = 0;
     const errors: string[] = [];
-    for (const r of rates) {
+    // e_feerate.id is an MIT node id — allocate a block of globally-unique ids.
+    const ids = await nextMitIds(rates.length);
+    for (let i = 0; i < rates.length; i++) {
+      const r = rates[i];
       if (!r.prefix) { errors.push("Missing prefix"); continue; }
       try {
-        await executeVos("INSERT INTO e_feerate (feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type) VALUES (?,?,?,?,?,?,?,?,?,?)",
-          [Number(groupId), String(r.prefix||""), String(r.areacode||""), Number(r.locktype)||0, Number(r.fee)||0, Number(r.tax)||0, Number(r.period)||0, Number(r.ivrfee)||0, Number(r.ivrperiod)||0, Number(r.type)||0]);
+        await executeVos("INSERT INTO e_feerate (id, feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+          [ids[i], Number(groupId), String(r.prefix||""), String(r.areacode||""), Number(r.locktype)||0, Number(r.fee)||0, Number(r.tax)||0, Number(r.period)||0, Number(r.ivrfee)||0, Number(r.ivrperiod)||0, Number(r.type)||0]);
         succeeded++;
       } catch (e) {
         errors.push(`${r.prefix}: ${e instanceof Error ? e.message : "Failed"}`);

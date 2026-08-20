@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
+import { nextMitId } from "@/lib/mit-ids";
 import { verifySession } from "@/lib/auth";
 import { sendNewAccountEmail } from "@/lib/email";
 
@@ -144,9 +145,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // VOS3000 e_customer.id is NOT auto-increment — manually get next ID
-    const [maxRow] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_customer");
-    const nextId = Number(maxRow?.next_id || 1);
+    // VOS3000 e_customer.id is an MIT node id — allocate a globally-unique id
+    // from the reserved high range so it can never collide with other MIT tables.
+    const nextId = await nextMitId();
     const now = Math.floor(Date.now() / 1000);
 
     // Build memo JSON for contact details

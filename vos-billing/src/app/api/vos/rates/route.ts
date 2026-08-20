@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
 import { sendRateChangeEmail } from "@/lib/email";
+import { nextMitId } from "@/lib/mit-ids";
 
 // ─── GET: List rate groups or rates within a group ───
 
@@ -225,11 +226,13 @@ export async function POST(request: NextRequest) {
     if (!feerategroup_id) return NextResponse.json({ error: "Rate group ID is required" }, { status: 400 });
     if (!prefix) return NextResponse.json({ error: "Prefix is required" }, { status: 400 });
 
+    // e_feerate.id is an MIT node id — allocate a globally-unique id.
+    const id = await nextMitId();
     const result = await executeVos(
-      `INSERT INTO e_feerate (feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO e_feerate (id, feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        Number(feerategroup_id), String(prefix), String(areacode||""), Number(locktype)||0,
+        id, Number(feerategroup_id), String(prefix), String(areacode||""), Number(locktype)||0,
         Number(fee)||0, Number(tax)||0, Number(period)||0,
         Number(ivrfee)||0, Number(ivrperiod)||0, Number(type)||0,
       ]
@@ -256,7 +259,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      id: (result as { insertId?: number }).insertId,
+      id,
       message: `Rate ${prefix} created`,
     });
   } catch (error) {

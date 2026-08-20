@@ -46,12 +46,39 @@ import {
   X,
   Mail,
   RefreshCw,
+  Rocket,
+  Globe,
+  ScrollText,
+  AlarmClock,
+  History,
+  KeySquare,
+  ShieldCheck,
+  MapPin,
+  ListChecks,
+  Ban,
+  Wifi,
+  PhoneCall,
+  MonitorDot,
+  Cpu,
+  HardDrive,
+  Headset,
+  Mailbox,
+  Video,
+  Link2,
+  Eraser,
+  ListMusic,
+  Music,
+  PhoneForwarded,
+  UserPlus,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function VersionDisplay({ collapsed }: { collapsed: boolean }) {
   const [version, setVersion] = useState<{ tag: string; commit: string; date: string; behind: number; ahead: number } | null>(null);
   const [checking, setChecking] = useState(false);
+
+  const [deploying, setDeploying] = useState(false);
+  const [deployMsg, setDeployMsg] = useState("");
 
   const fetchVersion = () => {
     fetch("/api/version")
@@ -70,6 +97,25 @@ function VersionDisplay({ collapsed }: { collapsed: boolean }) {
       setVersion(data);
     } catch { /* ignore */ }
     finally { setChecking(false); }
+  };
+
+  const triggerDeploy = async () => {
+    if (!confirm("Deploy the latest code to production? This will rebuild and restart the service.")) return;
+    setDeploying(true);
+    setDeployMsg("");
+    try {
+      const res = await fetch("/api/deploy", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setDeployMsg("✅ Deployed! Refresh to see new version.");
+        setTimeout(() => setDeployMsg(""), 8000);
+      } else {
+        setDeployMsg(`❌ ${data.error || "Deploy failed"}`);
+      }
+    } catch {
+      setDeployMsg("❌ Deploy request failed");
+    }
+    setDeploying(false);
   };
 
   if (!version) return null;
@@ -126,6 +172,21 @@ function VersionDisplay({ collapsed }: { collapsed: boolean }) {
               {version.behind} update{version.behind !== 1 ? "s" : ""} available — run deploy.sh
             </div>
           )}
+          {hasUpdates && !collapsed && (
+            <button
+              onClick={triggerDeploy}
+              disabled={deploying}
+              className="mt-1 w-full flex items-center justify-center gap-1 px-2 py-1 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 transition-colors disabled:opacity-50"
+            >
+              <Rocket className={`w-3 h-3 ${deploying ? "animate-pulse" : ""}`} />
+              {deploying ? "Deploying..." : "Deploy Now"}
+            </button>
+          )}
+          {deployMsg && (
+            <div className={`mt-1 text-[9px] ${deployMsg.startsWith("✅") ? "text-emerald-400" : "text-red-400"}`}>
+              {deployMsg}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -152,8 +213,9 @@ function isNavSection(item: MenuItem): item is NavSection {
 
 const TOP_LEVEL_SECTIONS = new Set([
   "Rate Management", "Package Management", "Account Management",
-  "Operation Management", "CDR Analysis", "Data Query",
-  "Data Reporting", "Cards Management", "Alarm Management", "System Management"
+  "Operation Management", "Data Query", "Data Report",
+  "CDR Analysis", "Cards Management", "Number Management",
+  "Interface Management", "Alarm Management", "System Management"
 ]);
 
 // Map URL path prefixes to the top-level section that should be expanded
@@ -163,10 +225,20 @@ const PATH_TO_SECTION: [string, string][] = [
   ["/dashboard/accounts", "Account Management"],
   ["/dashboard/clearing", "Account Management"],
   ["/dashboard/operation", "Operation Management"],
-  ["/dashboard/cdr", "CDR Analysis"],
+  ["/dashboard/online-routing", "Operation Management"],
+  ["/dashboard/online-mapping", "Operation Management"],
+  ["/dashboard/gateway-status", "Operation Management"],
+  ["/dashboard/active-calls", "Operation Management"],
+  ["/dashboard/active-phone-cards", "Operation Management"],
+  ["/dashboard/cdr-analysis", "CDR Analysis"],
   ["/dashboard/data-query", "Data Query"],
-  ["/dashboard/reports", "Data Reporting"],
+  ["/dashboard/bill-query", "Data Query"],
+  ["/dashboard/clearing-query", "Data Query"],
+  ["/dashboard/reports", "Data Report"],
   ["/dashboard/cards", "Cards Management"],
+  ["/dashboard/phone-card", "Cards Management"],
+  ["/dashboard/numbers", "Number Management"],
+  ["/dashboard/interface", "Interface Management"],
   ["/dashboard/alarms", "Alarm Management"],
   ["/dashboard/system", "System Management"],
 ];
@@ -184,7 +256,7 @@ const menuSections: MenuItem[] = [
   // Dashboard
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 
-  // Rate Management (expandable)
+  // Rate Management
   {
     label: "Rate Management",
     icon: DollarSign,
@@ -196,7 +268,7 @@ const menuSections: MenuItem[] = [
     ],
   },
 
-  // Package Management (expandable)
+  // Package Management
   {
     label: "Package Management",
     icon: Package,
@@ -207,7 +279,7 @@ const menuSections: MenuItem[] = [
     ],
   },
 
-  // Account Management (expandable)
+  // Account Management
   {
     label: "Account Management",
     icon: Building2,
@@ -223,7 +295,7 @@ const menuSections: MenuItem[] = [
     ],
   },
 
-  // Operation Management (expandable)
+  // Operation Management
   {
     label: "Operation Management",
     icon: Radio,
@@ -235,19 +307,99 @@ const menuSections: MenuItem[] = [
           { href: "/dashboard/operation/gateways/routing", label: "Routing Gateway", icon: ArrowLeftRight },
           { href: "/dashboard/operation/gateways/mapping", label: "Mapping Gateway", icon: GitBranch },
           { href: "/dashboard/operation/gateways/group", label: "Gateway Group", icon: Network },
+          { href: "/dashboard/online-routing", label: "Online Routing Gateway", icon: ArrowLeftRight },
+          { href: "/dashboard/online-mapping", label: "Online Mapping Gateway", icon: GitBranch },
+          { href: "/dashboard/gateway-status", label: "Gateway Status", icon: Activity },
           { href: "/dashboard/operation/ip-whitelist", label: "IP Whitelist Firewall", icon: Shield },
         ],
       },
-      { href: "/dashboard/operation/phone", label: "Phone Operation", icon: Phone },
-      { href: "/dashboard/operation/business-analysis", label: "Business Analysis", icon: TrendingUp },
+      {
+        label: "Phone Operation",
+        icon: Phone,
+        children: [
+          { href: "/dashboard/operation/phone", label: "Phone Management", icon: Phone },
+          { href: "/dashboard/active-phone-cards", label: "Online Phone", icon: Radio },
+        ],
+      },
+      {
+        label: "Business Analysis",
+        icon: TrendingUp,
+        children: [
+          { href: "/dashboard/operation/business-analysis", label: "Routing Analysis", icon: TrendingUp },
+          { href: "/dashboard/operation/network-test", label: "Network Test", icon: Wifi },
+          { href: "/dashboard/operation/call-performance", label: "Call Analysis", icon: BarChart3 },
+        ],
+      },
       { href: "/dashboard/operation/current-call", label: "Current Call", icon: Activity },
-      { href: "/dashboard/operation/call-performance", label: "Call Performance", icon: BarChart3 },
+      { href: "/dashboard/operation/registration", label: "Registration Management", icon: PhoneCall },
+      { href: "/dashboard/operation/domains", label: "Domain Management", icon: Globe },
       { href: "/dashboard/system/routes", label: "Route Management", icon: Route },
-      { href: "/dashboard/operation/gateways/mapping", label: "Mapping Gateway", icon: GitBranch },
     ],
   },
 
-  // CDR Analysis (expandable)
+  // Data Query
+  {
+    label: "Data Query",
+    icon: Database,
+    children: [
+      { href: "/dashboard/data-query/recent-cdr", label: "Recent CDR", icon: Clock },
+      { href: "/dashboard/data-query/cdr", label: "CDR", icon: Search },
+      { href: "/dashboard/data-query/payment", label: "Payment Record", icon: Receipt },
+      {
+        label: "Bill Query",
+        icon: FileText,
+        children: [
+          { href: "/dashboard/bill-query/revenue-detail", label: "Revenue Detail", icon: DollarSign },
+          { href: "/dashboard/bill-query/gateway-bill", label: "Gateway Bill", icon: Server },
+          { href: "/dashboard/bill-query/phone-bill", label: "Phone Bill", icon: Phone },
+          { href: "/dashboard/bill-query/area-detail", label: "Area Detail", icon: MapPin },
+          { href: "/dashboard/bill-query/account-area", label: "Account Area", icon: Building2 },
+          { href: "/dashboard/bill-query/account-balance", label: "Account Balance", icon: Wallet },
+        ],
+      },
+      {
+        label: "Clearing Query",
+        icon: Shield,
+        children: [
+          { href: "/dashboard/clearing-query/account-detail", label: "Clearing Account Detail", icon: Shield },
+          { href: "/dashboard/clearing-query/gateway-detail", label: "Clearing Gateway Detail", icon: Server },
+          { href: "/dashboard/clearing-query/account-balance", label: "Account Clearing Balance", icon: Wallet },
+        ],
+      },
+    ],
+  },
+
+  // Data Report
+  {
+    label: "Data Report",
+    icon: PieChart,
+    children: [
+      {
+        label: "Bill Report",
+        icon: FileText,
+        children: [
+          { href: "/dashboard/reports/daily", label: "Revenue Detail Report", icon: Calendar },
+          { href: "/dashboard/reports/monthly", label: "Monthly Report", icon: CalendarDays },
+          { href: "/dashboard/reports/agent", label: "Agent Income Report", icon: UserCheck },
+        ],
+      },
+      { href: "/dashboard/clearing/reports", label: "Clearing Report", icon: Shield },
+      {
+        label: "Analysis Report",
+        icon: BarChart3,
+        children: [
+          { href: "/dashboard/cdr-analysis/mapping-performance", label: "Mapping Gateway Analysis", icon: GitBranch },
+          { href: "/dashboard/cdr-analysis/routing-performance", label: "Routing Gateway Analysis", icon: ArrowLeftRight },
+          { href: "/dashboard/cdr-analysis/mapping-area-analysis", label: "Mapping Gateway Area Analysis", icon: MapPin },
+          { href: "/dashboard/cdr-analysis/routing-area-analysis", label: "Routing Gateway Area Analysis", icon: MapPin },
+          { href: "/dashboard/cdr-analysis/mapping-cross-analysis", label: "Gateway Cross Area Analysis", icon: Network },
+        ],
+      },
+      { href: "/dashboard/reports/management", label: "Report Management", icon: ClipboardList },
+    ],
+  },
+
+  // CDR Analysis
   {
     label: "CDR Analysis",
     icon: BarChart3,
@@ -279,62 +431,87 @@ const menuSections: MenuItem[] = [
     ],
   },
 
-  // Data Query (expandable)
-  {
-    label: "Data Query",
-    icon: Database,
-    children: [
-      { href: "/dashboard/data-query/cdr", label: "CDR Query", icon: Search },
-      { href: "/dashboard/data-query/payment", label: "Payment Query", icon: Receipt },
-      { href: "/dashboard/data-query/login", label: "Login Query", icon: LogIn },
-      { href: "/dashboard/data-query/operation", label: "Operation Query", icon: ClipboardList },
-    ],
-  },
-
-  // Data Reporting (expandable)
-  {
-    label: "Data Reporting",
-    icon: PieChart,
-    children: [
-      { href: "/dashboard/reports/daily", label: "Daily Report", icon: Calendar },
-      { href: "/dashboard/reports/monthly", label: "Monthly Report", icon: CalendarDays },
-      { href: "/dashboard/reports/agent", label: "Agent Report", icon: UserCheck },
-      { href: "/dashboard/accounts/billing/reports", label: "Billing Reports", icon: FileText },
-      { href: "/dashboard/clearing/reports", label: "Clearing Reports", icon: Shield },
-    ],
-  },
-
-  // Cards Management (expandable)
+  // Cards Management
   {
     label: "Cards Management",
     icon: CreditCard,
     children: [
+      { href: "/dashboard/phone-card", label: "Phone Card", icon: CreditCard },
       { href: "/dashboard/cards/suite", label: "Suite Management", icon: Layers },
       { href: "/dashboard/cards/management", label: "Cards Management", icon: CreditCard },
       { href: "/dashboard/cards/active", label: "Active Management", icon: Radio },
     ],
   },
 
-  // Alarm Management (expandable)
+  // Number Management
+  {
+    label: "Number Management",
+    icon: Hash,
+    children: [
+      { href: "/dashboard/numbers/sections", label: "Number Section Query", icon: Hash },
+      { href: "/dashboard/numbers/mobile-area", label: "Mobile Area", icon: MapPin },
+      { href: "/dashboard/numbers/city-code", label: "City Code", icon: Globe },
+      { href: "/dashboard/numbers/area-info", label: "Area Information", icon: MapPin },
+      { href: "/dashboard/numbers/limit-groups", label: "Black/White List Group", icon: ListChecks },
+      { href: "/dashboard/numbers/system-whitelist", label: "System White List", icon: ShieldCheck },
+      { href: "/dashboard/numbers/terminal-blacklist", label: "Terminal Blacklist Policy", icon: Ban },
+    ],
+  },
+
+  // Interface Management
+  {
+    label: "Interface Management",
+    icon: Server,
+    children: [
+      { href: "/dashboard/interface/web-access", label: "Web Access Control", icon: Shield },
+      { href: "/dashboard/interface/equipment", label: "Web Service Equipment", icon: Server },
+    ],
+  },
+
+  // Value-Added Services
+  {
+    label: "Value-Added Services",
+    icon: PhoneCall,
+    children: [
+      { href: "/dashboard/ivr", label: "IVR Service", icon: Phone },
+      { href: "/dashboard/conference", label: "Conference", icon: Video },
+      { href: "/dashboard/call-center", label: "Call Center", icon: Headset },
+      { href: "/dashboard/mailbox", label: "Mailbox", icon: Mailbox },
+      { href: "/dashboard/phone-service", label: "Phone Service", icon: PhoneCall },
+      { href: "/dashboard/e164-group", label: "E164 Group", icon: Link2 },
+      { href: "/dashboard/interface-agent", label: "Interface Agent", icon: Server },
+      { href: "/dashboard/axb-cdr", label: "AXB CDR Query", icon: PhoneForwarded },
+    ],
+  },
+
+  // Alarm Management
   {
     label: "Alarm Management",
     icon: Bell,
     children: [
-      { href: "/dashboard/alarms/system", label: "System Alarm", icon: Bell },
+      { href: "/dashboard/alarms/settings", label: "Alarm Settings", icon: SlidersHorizontal },
+      { href: "/dashboard/alarms/current", label: "Current Alarm", icon: Bell },
+      { href: "/dashboard/alarms/history", label: "History Alarm", icon: History },
     ],
   },
 
-  // System Management (expandable)
+  // System Management
   {
     label: "System Management",
     icon: Settings,
     children: [
-      { href: "/dashboard/system/parameters", label: "System Parameters", icon: SlidersHorizontal },
       { href: "/dashboard/system/users", label: "User Management", icon: Users },
+      { href: "/dashboard/system/log", label: "System Log", icon: ScrollText },
+      { href: "/dashboard/system/parameters", label: "System Parameter", icon: SlidersHorizontal },
+      { href: "/dashboard/system/calendar", label: "Work Calendar", icon: CalendarDays },
+      { href: "/dashboard/system/online-users", label: "Online User", icon: UserCheck },
+      { href: "/dashboard/system/privileges", label: "User Privilege Template", icon: KeySquare },
       { href: "/dashboard/system/routes", label: "Route Management", icon: Route },
       { href: "/dashboard/system/numbers", label: "Number Management", icon: Hash },
       { href: "/dashboard/system/smtp", label: "SMTP Configuration", icon: Mail },
       { href: "/dashboard/system/prefixes", label: "Prefix Database", icon: Hash },
+      { href: "/dashboard/system/auto-clean", label: "Auto Clean", icon: Eraser },
+      { href: "/dashboard/system/lerg", label: "LERG Database", icon: Database },
     ],
   },
 ];
@@ -470,7 +647,7 @@ export default function Sidebar() {
           {!collapsed && (
             <div className="whitespace-nowrap">
               <div className="font-bold text-sm text-white">Net2App</div>
-              <div className="text-[10px] text-white/60">VOS Billing</div>
+              <div className="text-[10px] text-white/60">V5 Billing</div>
             </div>
           )}
         </div>

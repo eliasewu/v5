@@ -94,7 +94,7 @@ export default function HomePage() {
             </div>
 
             <h2 className="text-3xl xl:text-4xl font-bold text-surface-50 leading-tight">
-              VOS Billing
+              Net2App V5
               <br />
               <span className="text-brand-300">Management Platform</span>
             </h2>
@@ -152,7 +152,7 @@ export default function HomePage() {
               <Zap className="w-7 h-7 text-surface-50" />
             </div>
             <h1 className="text-xl font-bold text-surface-50">Net2App</h1>
-            <p className="text-surface-400 text-xs mt-0.5">VOS Billing Platform</p>
+            <p className="text-surface-400 text-xs mt-0.5">V5 Billing Platform</p>
           </div>
 
           {/* Form Card */}

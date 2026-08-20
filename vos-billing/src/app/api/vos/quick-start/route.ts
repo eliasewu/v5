@@ -3,6 +3,7 @@ import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
 import { sendNewAccountEmail } from "@/lib/email";
 import crypto from "crypto";
+import { nextMitId } from "@/lib/mit-ids";
 
 // Password generation (matching VOS3000 MD5 convention)
 function md5(s: string) { return crypto.createHash("md5").update(s).digest("hex"); }
@@ -26,11 +27,12 @@ export async function POST(request: NextRequest) {
     const rateGroupName = body.rateGroupName?.trim() || `${mode === "client" ? "Client" : "Supplier"}_${Date.now()}`;
     const fakeMinute = body.fakeMinute ?? body.billingIncrement ?? 60;
 
-    const rateGroupResult = await executeVos(
-      "INSERT INTO e_feerategroup (name, fakeminute, isprivate, memo) VALUES (?, ?, ?, ?)",
-      [rateGroupName, Number(fakeMinute), 0, `Quick-start ${mode} setup`]
+    // MIT node ids are globally unique across tables — allocate from the safe range.
+    const rateGroupId = await nextMitId();
+    await executeVos(
+      "INSERT INTO e_feerategroup (id, name, fakeminute, isprivate, memo) VALUES (?, ?, ?, ?, ?)",
+      [rateGroupId, rateGroupName, Number(fakeMinute), 0, `Quick-start ${mode} setup`]
     );
-    const rateGroupId = (rateGroupResult as any).insertId;
 
     // ─── Step 2: Create Rates ───
     const prefix = body.prefix?.trim() || "";
@@ -41,16 +43,15 @@ export async function POST(request: NextRequest) {
     let rateId = 0;
 
     if (prefix) {
-      const rateResult = await executeVos(
-        "INSERT INTO e_feerate (feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [rateGroupId, prefix, areacode, 0, fee, tax, period, 0, 0, 0]
+      rateId = await nextMitId();
+      await executeVos(
+        "INSERT INTO e_feerate (id, feerategroup_id, feeprefix, areacode, locktype, fee, tax, period, ivrfee, ivrperiod, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [rateId, rateGroupId, prefix, areacode, 0, fee, tax, period, 0, 0, 0]
       );
-      rateId = (rateResult as any).insertId;
     }
 
     // ─── Step 3: Create Account ───
-    const [maxCust] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_customer");
-    const customerId = Number(maxCust?.next_id || 1);
+    const customerId = await nextMitId();
     const now = Math.floor(Date.now() / 1000);
     const accountName = body.accountName?.trim() || `${mode}_${Date.now()}`;
     const accountId = body.account?.trim() || `QS${Date.now()}`;
@@ -90,8 +91,7 @@ export async function POST(request: NextRequest) {
     try {
     if (mode === "client") {
       // Mapping gateway (inbound from customer)
-      const [maxGw] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_gatewaymapping");
-      gatewayId = Number(maxGw?.next_id || 1);
+      gatewayId = await nextMitId();
 
       await executeVos(
         `INSERT INTO e_gatewaymapping (id, name, password, customerpassword, locktype, calllevel, capacity,
@@ -113,8 +113,7 @@ export async function POST(request: NextRequest) {
       );
     } else {
       // Routing gateway (outbound to supplier)
-      const [maxGw] = await queryVos<any>("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM e_gatewayrouting");
-      gatewayId = Number(maxGw?.next_id || 1);
+      gatewayId = await nextMitId();
 
       const allowedPrefix = body.allowedPrefix?.trim() || "";
       const rewriteCallee = body.rewriteCallee?.trim() || "";

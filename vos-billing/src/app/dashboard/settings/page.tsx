@@ -35,7 +35,7 @@ export default function SettingsPage() {
           System Settings
         </h1>
         <p className="text-surface-400 text-sm mt-1">
-          Net2App VOS Billing — Configuration
+          Net2App V5 — Configuration
         </p>
       </div>
 

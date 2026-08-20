@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
 import { verifySession } from "@/lib/auth";
+import { nextMitId, nextMitIds } from "@/lib/mit-ids";
 
 // GET: list all area prefixes from VOS3000 e_areacode with rate usage count
 export async function GET(request: NextRequest) {
@@ -76,7 +77,10 @@ export async function POST(request: NextRequest) {
 
       let imported = 0;
       let failed = 0;
-      for (const row of rows) {
+      // e_areacode.id is an MIT node id — allocate a block of globally-unique ids.
+      const ids = await nextMitIds(rows.length);
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         const ac = String(row.areacode || "").trim();
         const loc = String(row.location || "").trim();
         if (!ac || !loc) { failed++; continue; }
@@ -84,9 +88,9 @@ export async function POST(request: NextRequest) {
         const incrBill = Number(row.incrementalBilling ?? 1);
         try {
           await executeVos(
-            `INSERT INTO e_areacode (areacode, location, initial_billing, incremental_billing) VALUES (?, ?, ?, ?)
+            `INSERT INTO e_areacode (id, areacode, location, initial_billing, incremental_billing) VALUES (?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE location = VALUES(location), initial_billing = VALUES(initial_billing), incremental_billing = VALUES(incremental_billing)`,
-            [ac, loc, initBill, incrBill]
+            [ids[i], ac, loc, initBill, incrBill]
           );
           imported++;
         } catch {
@@ -104,11 +108,12 @@ export async function POST(request: NextRequest) {
     const initBill = initialBilling !== undefined ? Number(initialBilling) : 1;
     const incrBill = incrementalBilling !== undefined ? Number(incrementalBilling) : 1;
 
-    // Upsert: insert or update
+    // Upsert: insert or update (id is an MIT node id — allocate a globally-unique id)
+    const id = await nextMitId();
     await executeVos(
-      `INSERT INTO e_areacode (areacode, location, initial_billing, incremental_billing) VALUES (?, ?, ?, ?)
+      `INSERT INTO e_areacode (id, areacode, location, initial_billing, incremental_billing) VALUES (?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE location = VALUES(location), initial_billing = VALUES(initial_billing), incremental_billing = VALUES(incremental_billing)`,
-      [String(areacode), String(location), initBill, incrBill]
+      [id, String(areacode), String(location), initBill, incrBill]
     );
 
     return NextResponse.json({ success: true, areacode, location, initialBilling: initBill, incrementalBilling: incrBill });
