@@ -267,6 +267,7 @@ const menuSections: MenuItem[] = [
       { href: "/dashboard/rates/wizard", label: "Rate Wizard", icon: Zap },
       { href: "/dashboard/rates/quick-start", label: "Quick Start Wizard", icon: Zap },
       { href: "/dashboard/rates/suites", label: "Suite Management", icon: Package },
+      { href: "/dashboard/rates/suites/assigned", label: "Assigned Suites", icon: ClipboardList },
       { href: "/dashboard/rates/gift-time", label: "Gift Time Rules", icon: Gift },
     ],
   },
