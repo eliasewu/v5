@@ -5,19 +5,19 @@ A modern HTTPS web dashboard for managing the VOS3000 VoIP switch — account ma
 ## Quick Deploy
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/eliasewu/vos-billing/main/vos-billing/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/eliasewu/v5/main/vos-billing/install.sh | bash
 ```
 
 ## Quick Uninstall
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/eliasewu/vos-billing/main/vos-billing/uninstall.sh | bash
+curl -sSL https://raw.githubusercontent.com/eliasewu/v5/main/vos-billing/uninstall.sh | bash
 ```
 
 ## Install VOS3000 Base
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/eliasewu/vos-billing/main/vos-billing/vos-install.sh | bash
+curl -sSL https://raw.githubusercontent.com/eliasewu/v5/main/vos-billing/vos-install.sh | bash
 ```
 
 ---

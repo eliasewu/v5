@@ -70,6 +70,7 @@ import {
   Music,
   PhoneForwarded,
   UserPlus,
+  Gift,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -265,6 +266,8 @@ const menuSections: MenuItem[] = [
       { href: "/dashboard/rates", label: "Rate Management", icon: DollarSign },
       { href: "/dashboard/rates/wizard", label: "Rate Wizard", icon: Zap },
       { href: "/dashboard/rates/quick-start", label: "Quick Start Wizard", icon: Zap },
+      { href: "/dashboard/rates/suites", label: "Suite Management", icon: Package },
+      { href: "/dashboard/rates/gift-time", label: "Gift Time Rules", icon: Gift },
     ],
   },
 

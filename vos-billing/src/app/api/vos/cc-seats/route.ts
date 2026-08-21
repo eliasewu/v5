@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { queryVos, executeVos } from "@/lib/vos-db";
+import { nextMitId } from "@/lib/mit-ids";
 import { verifySession } from "@/lib/auth";
 
 export async function GET() {
@@ -26,8 +27,7 @@ export async function POST(request: NextRequest) {
   try {
     const b = await request.json();
     if (!b.e164) return NextResponse.json({ error: "E164 required" }, { status: 400 });
-    const [maxRow] = await queryVos<any>("SELECT COALESCE(MAX(id),0)+1 AS next_id FROM e_cc_seat");
-    const nextId = Number(maxRow?.next_id || 1);
+    const nextId = await nextMitId();
     await executeVos(
       "INSERT INTO e_cc_seat (id, e164, level, password, jobid, locktype, status, arealimit, name, priority, record, memo, ivr_id, cc_seat_privilege_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [nextId, String(b.e164), Number(b.level) || 0, String(b.password || ""), String(b.jobid || ""), Number(b.locktype) || 0,
