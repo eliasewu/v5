@@ -70,10 +70,10 @@ export async function POST(request: NextRequest) {
 
     await executeVos(
       `INSERT INTO e_customer (id, customer_id, account, name, money, limitmoney, type, status,
-        starttime, lastupdatetime, feerategroup_id, feerategroupprivate_id, alarmemail, memo, locktype)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        starttime, lastupdatetime, feerategroup_id, feerategroupprivate_id, alarmemail, memo, locktype, timezoneid)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
       [customerId, customerId, accountId, accountName, money, limitMoney, accountType, 1,
-        now, now, rateGroupId, 0, email, memoStr]
+        now, now, rateGroupId, 0, email, memoStr, body.timezoneid || "0"]
     );
 
     // ─── Step 4: Create Gateway ───

@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
         body.phonebookserialid ?? 0,
         body.phonebooklimit ?? 0,
         body.ctdbillingtype ?? 0,
-        body.timezoneid || "",
+        body.timezoneid || "0",
         body.workday ?? 1,
         body.feetimeaverage ?? 0,
         body.feetimeaveragenonwork ?? 0,

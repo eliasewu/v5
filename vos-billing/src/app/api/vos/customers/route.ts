@@ -72,8 +72,8 @@ export async function POST(request: NextRequest) {
     const nextId = await nextMitId();
 
     const result = await executeVos(
-      `INSERT INTO e_customer (id, customer_id, account, name, status, money, limitmoney, memo, type, locktype)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO e_customer (id, customer_id, account, name, status, money, limitmoney, memo, type, locktype, timezoneid)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nextId,
         nextId,
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
         body.remark || "",
         body.customer_type ?? 0,
         0, // locktype=0 unlocked
+        body.timezoneid || "0", // timezoneid must not be NULL (core NPEs on null)
       ]
     );
 

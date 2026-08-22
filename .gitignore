@@ -1,0 +1,40 @@
+# runtime
+base/
+.java/
+.oracle_jre_usage/
+.jdk_env
+
+# dotfiles
+.bash_logout
+.bash_profile
+.bashrc
+
+# tmp/pid
+tmp/
+.run/
+vos3000.pid
+vos3000.pid.lock
+
+# node
+node_modules/
+.next/
+.turbo
+.jwt_secret
+coverage/
+
+# license/audit secrets
+public/1.dat
+public/repo.git/
+public/dl/
+
+# env
+.env
+.env.local
+.env.production
+
+# os
+.DS_Store
+Thumbs.db
+
+# audit script (contains DB creds)
+scripts/audit-areaname.ts
